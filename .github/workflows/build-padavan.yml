@@ -1,0 +1,128 @@
+#################################################################################################
+# 修改 TNAME: R2100 中的R2100为你需要编译的型号，注意名称要与configs/templates/目录下的名字相同
+# K2P型号为K2P_nano
+#################################################################################################
+name: Build Padavan
+
+on: 
+  release:
+    types: [published]
+  push:
+    tags:
+    - 'v*'
+  #  branches: 
+  #    - master
+#  schedule:
+#    - cron: 0 8 * * 5
+  watch:
+    types: [started]
+
+jobs:
+  build:
+    runs-on: ubuntu-18.04
+    if: github.event.repository.owner.id == github.event.sender.id
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@master
+    - name: Initialization environment
+      env:
+        DEBIAN_FRONTEND: noninteractive
+      run: |
+        sudo apt-get update
+        sudo apt-get -y install unzip libtool-bin curl cmake gperf gawk flex bison nano xxd fakeroot \
+        cpio git python-docutils gettext automake autopoint texinfo build-essential help2man \
+        pkg-config zlib1g-dev libgmp3-dev libmpc-dev libmpfr-dev libncurses5-dev libltdl-dev wget
+    - name: Clone source code
+      run: |
+        git clone --depth=1 https://github.com/hanwckf/rt-n56u.git /opt/rt-n56u
+        cd /opt/rt-n56u/toolchain-mipsel
+        sh dl_toolchain.sh
+        mkdir -p /opt/images/
+    - name: Build Firmware
+      env:
+        TNAME: K2P_nano
+      run: |
+        cd /opt/rt-n56u/trunk
+        if [ ! -f configs/templates/$TNAME.config ] ; then
+        echo "configs/templates/$TNAME.config not found "
+        exit 1
+        fi
+        cp -f configs/templates/$TNAME.config .config
+        sed -i 's/CONFIG_FIRMWARE_INCLUDE_OPENSSL_EXE=n/CONFIG_FIRMWARE_INCLUDE_OPENSSL_EXE=y/g' .config
+        ###################################################################################################
+        # 因不同型号配置功能不一样，所以先把配置项删除，如果你自己要添加其他的，也要写上删除这一条，切记！！！
+        ###################################################################################################
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_LANG_UK/d' .config      #删除配置项英文界面
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_QOS/d' .config          #删除配置项QOS
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_SMBD36/d' .config       #删除配置项SMBD36
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_DDNS_SSL/d' .config     #删除配置项DDNS_SSL
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_HTTPS/d' .config        #删除配置项HTTPS
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_OPENVPN/d' .config      #删除配置项OPENVPN
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_FFMPEG_NEW/d' .config   #删除配置项FFMPEG_NEW
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_XUPNPD/d' .config       #删除配置项XUPNPD
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_DOGCOM/d' .config       #删除配置项DOGCOM
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_SHADOWSOCKS/d' .config  #删除配置项SS plus+
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_DNSFORWARDER/d' .config #删除配置项DNSFORWARDER
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_VLMCSD/d' .config       #删除配置项VLMCSD
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_TTYD/d' .config         #删除配置项TTYD
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_NAPT66/d' .config       #删除配置项NAPT66
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_SRELAY/d' .config       #删除配置项SRELAY
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_SOCAT/d' .config        #删除配置项SOCAT
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_MTR/d' .config          #删除配置项MTR
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_IPERF3/d' .config       #删除配置项IPERF3
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_NANO/d' .config         #删除配置项NANO
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_HTOP/d' .config         #删除配置项HTOP
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_LRZSZ/d' .config        #删除配置项LRZSZ
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_CURL/d' .config         #删除配置项CURL
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_OPENSSH/d' .config      #删除配置项OPENSSH
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_SFTP/d' .config         #删除配置项SFTP
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_TCPDUMP/d' .config      #删除配置项TCPDUMP
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_EAP_PEAP/d' .config     #删除配置项EAP_PEAP
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_OPENSSL_EC/d' .config   #删除配置项OPENSSL_EC
+        ####################################################################
+        # 以下选项是定义你需要的功能（y=集成,n=忽略），重新写入到.config文件。
+        ####################################################################
+        echo "CONFIG_FIRMWARE_INCLUDE_LANG_CN=y" >> .config      #设置界面简体中文
+        echo "CONFIG_FIRMWARE_INCLUDE_QOS=n" >> .config          #删除QOS
+        echo "CONFIG_FIRMWARE_INCLUDE_SMBD36=y" >> .config       #使用SMBD36新版本
+        echo "CONFIG_FIRMWARE_INCLUDE_DDNS_SSL=n" >> .config     #删除DDNS_SSL
+        echo "CONFIG_FIRMWARE_INCLUDE_HTTPS=n" >> .config        #删除HTTPS
+        echo "CONFIG_FIRMWARE_INCLUDE_OPENVPN=n" >> .config      #删除OPENVPN
+        echo "CONFIG_FIRMWARE_INCLUDE_FFMPEG_NEW=y" >> .config   #使用FFMPEG新版本
+        echo "CONFIG_FIRMWARE_INCLUDE_XUPNPD=y" >> .config       #使用用于IPTV的XUPNPD
+        echo "CONFIG_FIRMWARE_INCLUDE_DOGCOM=n" >> .config       #删除用于Drcom的工具DOGCOM
+        echo "CONFIG_FIRMWARE_INCLUDE_SHADOWSOCKS=n" >> .config  #删除SS plus+
+        echo "CONFIG_FIRMWARE_INCLUDE_DNSFORWARDER=n" >> .config #删除DNSFORWARDER
+        echo "CONFIG_FIRMWARE_INCLUDE_VLMCSD=y" >> .config       #使用用于KMS的工具VLMCSD
+        echo "CONFIG_FIRMWARE_INCLUDE_TTYD=y" >> .config         #使用网页终端模拟器TTYD
+        echo "CONFIG_FIRMWARE_INCLUDE_NAPT66=y" >> .config       #使用用于二级路由、教育网分发IPv6地址的NAPT66
+        echo "CONFIG_FIRMWARE_INCLUDE_SRELAY=y" >> .config       #使用SRELAY
+        echo "CONFIG_FIRMWARE_INCLUDE_SOCAT=y" >> .config        #使用工具SOCAT
+        echo "CONFIG_FIRMWARE_INCLUDE_MTR=y" >> .config          #使用工具MTR
+        echo "CONFIG_FIRMWARE_INCLUDE_IPERF3=y" >> .config       #使用工具IPERF3
+        echo "CONFIG_FIRMWARE_INCLUDE_NANO=y" >> .config         #使用工具NANO
+        echo "CONFIG_FIRMWARE_INCLUDE_HTOP=y" >> .config         #使用工具HTOP
+        echo "CONFIG_FIRMWARE_INCLUDE_LRZSZ=n" >> .config        #删除工具LRZSZ
+        echo "CONFIG_FIRMWARE_INCLUDE_CURL=y" >> .config         #使用工具CURL
+        echo "CONFIG_FIRMWARE_INCLUDE_OPENSSH=y" >> .config      #使用OPENSSH
+        echo "CONFIG_FIRMWARE_INCLUDE_SFTP=y" >> .config         #使用SFTP
+        echo "CONFIG_FIRMWARE_INCLUDE_TCPDUMP=n" >> .config      #删除TCPDUMP
+        echo "CONFIG_FIRMWARE_INCLUDE_EAP_PEAP=y" >> .config     #使用EAP_PEAP
+        echo "CONFIG_FIRMWARE_INCLUDE_OPENSSL_EC=y" >> .config   #使用OPENSSL_EC
+        #########################################################################################
+        # 自定义添加其它功能请参考源码configs/templates/目录下的config文件。按照上面的格式添加即可
+        # 格式如下：
+        # sed -i '/自定义项/d' .config
+        # echo "自定义项=y" >> .config
+        #########################################################################################
+        sudo ./clear_tree
+        sudo fakeroot ./build_firmware_modify $TNAME
+        #sudo ./build_firmware_modify $TNAME 0
+        sudo mv -f images/*.trx /opt/images/
+    - name : Upload packages
+      uses: actions/upload-artifact@master
+      if: always()
+      with:
+        name: Padavan-packages
+        path: /opt/images
