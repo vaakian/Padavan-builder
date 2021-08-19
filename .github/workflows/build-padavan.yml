@@ -49,7 +49,6 @@ jobs:
         exit 1
         fi
         cp -f configs/templates/$TNAME.config .config
-        sed -i 's/CONFIG_FIRMWARE_INCLUDE_OPENSSL_EXE=n/CONFIG_FIRMWARE_INCLUDE_OPENSSL_EXE=y/g' .config
         ###################################################################################################
         # 因不同型号配置功能不一样，所以先把配置项删除，如果你自己要添加其他的，也要写上删除这一条，切记！！！
         ###################################################################################################
@@ -80,6 +79,7 @@ jobs:
         sed -i '/CONFIG_FIRMWARE_INCLUDE_TCPDUMP/d' .config      #删除配置项TCPDUMP
         sed -i '/CONFIG_FIRMWARE_INCLUDE_EAP_PEAP/d' .config     #删除配置项EAP_PEAP
         sed -i '/CONFIG_FIRMWARE_INCLUDE_OPENSSL_EC/d' .config   #删除配置项OPENSSL_EC
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_OPENSSL_EXE/d' .config  #删除配置项OPENSSL_EXE
         ####################################################################
         # 以下选项是定义你需要的功能（y=集成,n=忽略），重新写入到.config文件。
         ####################################################################
@@ -110,6 +110,7 @@ jobs:
         echo "CONFIG_FIRMWARE_INCLUDE_TCPDUMP=n" >> .config      #删除TCPDUMP
         echo "CONFIG_FIRMWARE_INCLUDE_EAP_PEAP=y" >> .config     #使用EAP_PEAP
         echo "CONFIG_FIRMWARE_INCLUDE_OPENSSL_EC=y" >> .config   #使用OPENSSL_EC
+        echo "CONFIG_FIRMWARE_INCLUDE_OPENSSL_EXE=n" >> .config  #删除OPENSSL_EXE
         #########################################################################################
         # 自定义添加其它功能请参考源码configs/templates/目录下的config文件。按照上面的格式添加即可
         # 格式如下：
